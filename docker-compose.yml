@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  osrm-prep:
+    image: osrm/osrm-backend
+    container_name: osrm-prep
+    command: >
+      sh -c "
+      osrm-extract -p /opt/car.lua /osm-map/iran-latest.osm.pbf &&
+      osrm-partition /osm-map/iran-latest.osrm &&
+      osrm-customize /osm-map/iran-latest.osrm"
+    volumes:
+      - ./osm-map:/osm-map
+    working_dir: /osm-map
+    profiles:
+      - prep
+
+  osrm:
+    image: osrm/osrm-backend
+    container_name: osrm-server
+    command: >
+      osrm-routed --algorithm mld /osm-map/iran-latest.osrm
+    ports:
+      - "5000:5000"
+    # depends_on:
+    #   - osrm-prep
+    volumes:
+      - ./osm-map:/osm-map
+    profiles:
+      - osrm-server
